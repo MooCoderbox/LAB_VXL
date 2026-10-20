@@ -1,5 +1,5 @@
 /* USER CODE BEGIN Header */
-// b_2_2
+// b_2_1
 /**
   ******************************************************************************
   * @file           : main.c
@@ -205,16 +205,19 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, DOT_Pin|LED_RED_Pin|EN0_Pin|EN1_Pin
-                          |EN2_Pin|EN3_Pin, GPIO_PIN_RESET);
+                          |EN2_Pin|EN3_Pin|d_Pin|e_Pin
+                          |f_Pin|g_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SEG0_Pin|SEG1_Pin|SEG2_Pin|SEG3_Pin
                           |SEG4_Pin|SEG5_Pin|SEG6_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : DOT_Pin LED_RED_Pin EN0_Pin EN1_Pin
-                           EN2_Pin EN3_Pin */
+                           EN2_Pin EN3_Pin d_Pin e_Pin
+                           f_Pin g_Pin */
   GPIO_InitStruct.Pin = DOT_Pin|LED_RED_Pin|EN0_Pin|EN1_Pin
-                          |EN2_Pin|EN3_Pin;
+                          |EN2_Pin|EN3_Pin|d_Pin|e_Pin
+                          |f_Pin|g_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -360,78 +363,34 @@ void display7SEG(int num)
 }
 
 int counter = 50;
-int ledId = 1;
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+int isFirstLed = 1;
+void HAL_TIM_PeriodElapsedCallback ( TIM_HandleTypeDef * htim )
 {
-        switch (ledId) {
-            case 1:
-                counter--;
-                HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_RESET);
-                display7SEG(1);
+	if (isFirstLed == 1) {
+		 counter --;
+		 if( counter <= 0){
+		 counter = 50;
+		 isFirstLed = 0;
+		 }
+		 HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_RESET);
+		 display7SEG ( 1 );
 
-                if (counter <= 0) {
-                    counter = 50;
-                    ledId = 2;
-                }
-                break;
+	} else {
+		counter --;
+				 if( counter <= 0){
+				 counter = 50;
+				 isFirstLed = 1;
+				 }
 
-            case 2:
-                counter--;
-                HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_RESET);
-                display7SEG(2);
+				 HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_SET);
+				 		 HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_RESET);
+				 display7SEG ( 2 );
 
-                if (counter <= 0) {
-                    counter = 50;
-                    ledId = 3;
-                }
-                break;
+	}
 
-            case 3:
-                counter--;
-                HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_SET);
-                display7SEG(3);
 
-                if (counter <= 0) {
-                    counter = 50;
-                    ledId = 4;
-                }
-                break;
-
-            case 4:
-                counter--;
-                HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_SET);
-                display7SEG(0);
-
-                if (counter <= 0) {
-                    counter = 50;
-                    ledId = 1; // Quay lại LED đầu tiên
-                }
-                break;
-
-            default:
-                ledId = 1;
-                counter = 50;
-                break;
-        }
-
-}
+ }
 /* USER CODE END 4 */
 
 /**
