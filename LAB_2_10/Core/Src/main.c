@@ -1,5 +1,5 @@
 /* USER CODE BEGIN Header */
-// b_2_4
+// b_2_3
 /**
   ******************************************************************************
   * @file           : main.c
@@ -372,7 +372,8 @@ void update7SEG(int index) {
             HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
             HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
 
-
+            // Bật dấu chấm DOT (mức RESET)
+            HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_RESET);
 
             display7SEG(led_buffer[0]);
             break;
@@ -384,6 +385,9 @@ void update7SEG(int index) {
             HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
             HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
 
+            // Tắt dấu chấm DOT (mức SET)
+            HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_RESET);
+
             display7SEG(led_buffer[1]);
             break;
 
@@ -394,6 +398,8 @@ void update7SEG(int index) {
             HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_RESET);
             HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
 
+            // Bật dấu chấm DOT (mức RESET)
+            HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_SET);
 
             display7SEG(led_buffer[2]);
             break;
@@ -405,6 +411,8 @@ void update7SEG(int index) {
             HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
             HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_RESET);
 
+            // Tắt dấu chấm DOT (mức SET)
+            HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_SET);
 
             display7SEG(led_buffer[3]);
             break;
@@ -413,27 +421,18 @@ void update7SEG(int index) {
             break;
     }
 }
-int counter = 25;
-int led_blink = 1;
+int counter = 50;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     counter--;
     if (counter <= 0) {
-        counter = 25;
-        if (led_blink == 1) {
-                    HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_RESET);
-                    }
-                    else {
-                    	HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_SET);
-                    }
+        counter = 50;
+
         update7SEG(index_led);
 
         index_led++;
         if (index_led >= MAX_LED) {
-            index_led = 0;
-            if (led_blink == 0) {
-            	led_blink = 1;
-            } else led_blink = 0;
+            index_led = 0; // Quay về LED đầu tiên
         }
     }
 }
