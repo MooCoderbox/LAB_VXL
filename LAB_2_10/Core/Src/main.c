@@ -1,5 +1,5 @@
 /* USER CODE BEGIN Header */
-// b_2_3
+// b_2_2
 /**
   ******************************************************************************
   * @file           : main.c
@@ -53,7 +53,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
-void update7SEG(int index);
+
 void display7SEG(int num);
 
 /* USER CODE END PFP */
@@ -359,84 +359,79 @@ void display7SEG(int num)
     HAL_GPIO_WritePin(GPIOB, SEG6_Pin, seg_table[num][6] ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 
-const int MAX_LED = 4;
-int index_led = 0;
-int led_buffer[4] = {1, 2, 3, 0}; // Gán giá trị cần hiển thị: 1, 2, 3, 0
-
-void update7SEG(int index) {
-    switch (index) {
-        case 0:
-            // Bật LED 1 (EN0 kích hoạt mức RESET)
-            HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
-
-            // Bật dấu chấm DOT (mức RESET)
-            HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_RESET);
-
-            display7SEG(led_buffer[0]);
-            break;
-
-        case 1:
-            // Bật LED 2 (EN1 kích hoạt mức RESET)
-            HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
-
-            // Tắt dấu chấm DOT (mức SET)
-            HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_RESET);
-
-            display7SEG(led_buffer[1]);
-            break;
-
-        case 2:
-            // Bật LED 3 (EN2 kích hoạt mức RESET)
-            HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
-
-            // Bật dấu chấm DOT (mức RESET)
-            HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_SET);
-
-            display7SEG(led_buffer[2]);
-            break;
-
-        case 3:
-            // Bật LED 4 (EN3 kích hoạt mức RESET)
-            HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_RESET);
-
-            // Tắt dấu chấm DOT (mức SET)
-            HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_SET);
-
-            display7SEG(led_buffer[3]);
-            break;
-
-        default:
-            break;
-    }
-}
 int counter = 50;
+int ledId = 1;
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    counter--;
-    if (counter <= 0) {
-        counter = 50;
+        switch (ledId) {
+            case 1:
+                counter--;
+                HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_RESET);
+                display7SEG(1);
 
-        update7SEG(index_led);
+                if (counter <= 0) {
+                    counter = 50;
+                    ledId = 2;
+                }
+                break;
 
-        index_led++;
-        if (index_led >= MAX_LED) {
-            index_led = 0; // Quay về LED đầu tiên
+            case 2:
+                counter--;
+                HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_RESET);
+                display7SEG(2);
+
+                if (counter <= 0) {
+                    counter = 50;
+                    ledId = 3;
+                }
+                break;
+
+            case 3:
+                counter--;
+                HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_SET);
+                display7SEG(3);
+
+                if (counter <= 0) {
+                    counter = 50;
+                    ledId = 4;
+                }
+                break;
+
+            case 4:
+                counter--;
+                HAL_GPIO_WritePin(GPIOA, EN0_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, EN1_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, EN2_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOA, EN3_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(GPIOA, DOT_Pin, GPIO_PIN_SET);
+                display7SEG(0);
+
+                if (counter <= 0) {
+                    counter = 50;
+                    ledId = 1; // Quay lại LED đầu tiên
+                }
+                break;
+
+            default:
+                ledId = 1;
+                counter = 50;
+                break;
         }
-    }
-}
 
+}
 /* USER CODE END 4 */
 
 /**
