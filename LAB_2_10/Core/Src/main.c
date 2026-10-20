@@ -1,4 +1,5 @@
 /* USER CODE BEGIN Header */
+// b_2_9
 /**
   ******************************************************************************
   * @file           : main.c
@@ -46,16 +47,16 @@ TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 int hour = 12, minute = 30, second = 0;
-uint8_t matrix_buffer[8] =  {
-	    0xFC,
-	    0xFE,
-	    0x13,
-	    0x11,
-	    0x11,
-	    0x13,
-	    0xFE,
-	    0xFC
-	};
+uint8_t matrix_buffer[8] = {
+    0xFC,
+    0xFE,
+    0x13,
+    0x11,
+    0x11,
+    0x13,
+    0xFE,
+    0xFC
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,8 +71,6 @@ void updateClockBuffer(void);
 
 void displayLEDMatrix(uint8_t data);
 void updateLEDMatrix(int index);
-void resetMatrixA(void);
-void shiftMatrixLeft(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -105,15 +104,6 @@ void setTimer2(int duration)
     timer2_flag = 0;
 }
 
-int timer3_counter = 0;
-int timer3_flag = 0;
-
-void setTimer3(int duration)
-{
-    timer3_counter = duration / TIMER_CYCLE;
-    timer3_flag = 0;
-}
-
 void timer_run()
 {
     if(timer0_counter > 0)
@@ -138,14 +128,6 @@ void timer_run()
 
         if(timer2_counter == 0)
             timer2_flag = 1;
-    }
-
-    if(timer3_counter > 0)
-    {
-        timer3_counter--;
-
-        if(timer3_counter == 0)
-            timer3_flag = 1;
     }
 }
 /* USER CODE END 0 */
@@ -194,15 +176,12 @@ int main(void)
   setTimer2(10);
   const int MAX_LED_MATRIX = 8;
   int index_led_matrix = 0;
-  setTimer3(300);
+
 
 
   while (1)
   {
-	  // =====================================
-	      // TIMER 0: DIGITAL CLOCK
-	      // =====================================
-	      if (timer0_flag == 1)
+	  if (timer0_flag == 1)
 	      {
 	          second++;
 
@@ -231,10 +210,7 @@ int main(void)
 	          setTimer0(1000);
 	      }
 
-
-	      // =====================================
-	      // TIMER 1: 7-SEGMENT SCAN
-	      // =====================================
+	      // 4 seven-segment LEDs
 	      if (timer1_flag == 1)
 	      {
 	          update7SEG(index_led);
@@ -249,10 +225,7 @@ int main(void)
 	          setTimer1(250);
 	      }
 
-
-	      // =====================================
-	      // TIMER 2: MATRIX SCAN
-	      // =====================================
+	      // 8x8 LED Matrix
 	      if (timer2_flag == 1)
 	      {
 	          updateLEDMatrix(index_led_matrix);
@@ -265,17 +238,6 @@ int main(void)
 	          }
 
 	          setTimer2(10);
-	      }
-
-
-	      // =====================================
-	      // TIMER 3: MATRIX ANIMATION
-	      // =====================================
-	      if (timer3_flag == 1)
-	      {
-	          shiftMatrixLeft();
-
-	          setTimer3(300);
 	      }
 
 
@@ -586,77 +548,6 @@ void display7SEG(int num)
     HAL_GPIO_WritePin(GPIOB, SEG6_Pin, seg_table[num][6] ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 
-int matrix_shift_count = 0;
-const int MAX_LED_MATRIX = 8;
-
-uint8_t A_pattern[8] = {
-	    0xFC,
-	    0xFE,
-	    0x13,
-	    0x11,
-	    0x11,
-	    0x13,
-	    0xFE,
-	    0xFC
-	};
-void resetMatrixA(void)
-{
-    int i;
-
-    for(i = 0; i < MAX_LED_MATRIX; i++)
-    {
-        matrix_buffer[i] = A_pattern[i];
-    }
-}
-
-
-//void shiftMatrixLeft(void)
-//{
-//    int i;
-//
-//    for(i = 0; i < MAX_LED_MATRIX - 1; i++)
-//    {
-//        matrix_buffer[i] = matrix_buffer[i + 1];
-//    }
-//
-//    matrix_buffer[MAX_LED_MATRIX - 1] = 0x00;
-//
-//    matrix_shift_count++;
-//
-//    if(matrix_shift_count >= 8)
-//    {
-//        resetMatrixA();
-//        matrix_shift_count = 0;
-//    }
-//}
-int matrix_offset = 8;
-
-void shiftMatrixLeft(void)
-{
-    int col;
-    int source_col;
-
-    for (col = 0; col < MAX_LED_MATRIX; col++)
-    {
-        source_col = col - matrix_offset;
-
-        if (source_col >= 0 && source_col < 8)
-        {
-            matrix_buffer[col] = A_pattern[source_col];
-        }
-        else
-        {
-            matrix_buffer[col] = 0x00;
-        }
-    }
-
-    matrix_offset--;
-
-    if (matrix_offset < -8)
-    {
-        matrix_offset = 8;
-    }
-}
 
 int led_buffer[4] = {1, 2, 3, 0};
 
