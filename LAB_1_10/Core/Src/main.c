@@ -92,7 +92,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-  int counter_timer = 0; // 0 -> 1727 (12.12.12 -1)
+  int counter_timer = 0; // 0 -> 8639  (12.12.(5.12) -1)
   clearAllClock();
   /* USER CODE END 2 */
 
@@ -101,7 +101,7 @@ int main(void)
   while (1)
   {
 	  displayClock(counter_timer++);
-	  if (counter_timer == 1728) {
+	  if (counter_timer == 8639) {
 		  counter_timer = 0;
 	  }
 	  HAL_Delay (2000);
@@ -211,17 +211,15 @@ void clearNumberOnClock(int num)
 }
 
 void displayClock(int num) {
-	int sec = (num%12);
-	int min = ((num - sec)%144)/12;
-	int hours = num/144;
-
-
-	clearAllClock();
-	setNumberOnClock(hours);
-	setNumberOnClock(min);
-	setNumberOnClock(sec);
+  int sec   = num % 12;         // đổi mỗi 5 giây
+  int min   = (num / 60) % 12;  // đổi mỗi 5 phút (60 tick)
+  int hours = num / 720;        // đổi mỗi 1 giờ (720 tick), 0 -> 11
+  
+  clearAllClock();
+  setNumberOnClock(hours);
+  setNumberOnClock(min);
+  setNumberOnClock(sec);
 }
-
 /* USER CODE END 4 */
 
 /**
