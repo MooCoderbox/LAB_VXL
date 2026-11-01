@@ -104,7 +104,7 @@ int main(void)
 	  if (counter_timer == 8639) {
 		  counter_timer = 0;
 	  }
-	  HAL_Delay (2000);
+	  HAL_Delay (200);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
