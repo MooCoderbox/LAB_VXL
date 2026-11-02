@@ -8,25 +8,21 @@
 #ifndef INC_CONFIG_H_
 #define INC_CONFIG_H_
 
-#define TIM_PRESCALER       7999
-#define TIM_PERIOD          9
+/* TIM2 button scan is designed for a 10 ms interrupt period. */
+#define BUTTON_DEBOUNCE_SAMPLES         2U
 
-/* Fixed system constant: TIM2 input clock (8 MHz with the default HSI).
- * Change it only if you change the clock tree in CubeMX. */
-#define TIM_CLOCK_HZ        8000000ULL
+#define DEFAULT_GREEN_SECONDS           3U
+#define DEFAULT_YELLOW_SECONDS          2U
+#define DEFAULT_RED_SECONDS             (DEFAULT_GREEN_SECONDS + DEFAULT_YELLOW_SECONDS)
 
-/* ---- derived at compile time, never edit ---- */
-#define TIMER_CYCLE_US      (((TIM_PRESCALER) + 1ULL) * ((TIM_PERIOD) + 1ULL) \
-                             * 1000000ULL / (TIM_CLOCK_HZ))
-#define TIMER_CYCLE_MS      (TIMER_CYCLE_US / 1000ULL)
-#define MS_TO_TICKS(ms)     (((ms) * 1000ULL + TIMER_CYCLE_US / 2ULL) / TIMER_CYCLE_US)
+/* 2 Hz means a complete ON/OFF cycle every 500 ms. */
+#define MANUAL_BLINK_TOGGLE_MS           250U
+#define MANUAL_IDLE_TIMEOUT_MS           10000U
 
-/* Periods used by the application */
-#define SEC_MS              1000    /* countdown tick           */
-#define BLINK_MS            250     /* toggle period, 2 Hz blink */
-#define TIMEOUT_MS          10000   /* manual mode timeout      */
-#define SCAN_MS             10      /* 7-segment multiplex step */
+/* Four-digit multiplex refresh: each digit is selected every 2 ms. */
+#define SEVENSEG_SCAN_INTERVAL_MS        2U
 
-
+/* Set to 1 for active-low digit-enable pins (common-anode style). */
+#define SEVENSEG_ENABLE_ACTIVE_LOW       1
 
 #endif /* INC_CONFIG_H_ */

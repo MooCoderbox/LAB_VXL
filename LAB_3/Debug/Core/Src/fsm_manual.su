@@ -1,0 +1,6 @@
+fsm_manual.c:21:21:setting_color_for_mode	4	static
+fsm_manual.c:31:21:traffic_color_for_mode	4	static
+fsm_manual.c:41:13:restart_inactivity_timer	8	static
+fsm_manual.c:46:6:FSM_Manual_Enter	8	static
+fsm_manual.c:61:9:FSM_Manual_Update	16	static
+fsm_manual.c:112:9:FSM_Manual_GetMode	4	static

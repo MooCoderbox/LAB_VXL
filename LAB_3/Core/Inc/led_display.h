@@ -8,23 +8,24 @@
 #ifndef INC_LED_DISPLAY_H_
 #define INC_LED_DISPLAY_H_
 
+#include <stdint.h>
 
+typedef enum {
+    TRAFFIC_OFF = 0,
+    TRAFFIC_RED,
+    TRAFFIC_YELLOW,
+    TRAFFIC_GREEN
+} TrafficColor;
 
-void display7SEG(int num);
-const int MAX_LED = 4;
-int index_led = 0;
-int led_buffer[4] = {1, 2, 3, 0}; // Gán giá trị cần hiển thị: 1, 2, 3, 0
-void update7SEG(int index);
-void updateClockBuffer(void);
-
-typedef enum { ROAD_A, ROAD_B } Road;
-typedef enum { COLOR_OFF, COLOR_RED, COLOR_YELLOW, COLOR_GREEN } Color;
-
-void led_set_road(Road r, Color c);          // one colour on, others off
-void led_set_color_all(Color c, int on);     // for blinking in manual modes
-void led_all_off(void);
-
-void seg_set_pair(int pair, int value);      // pair 0 or 1, value 0..99
-void display_update(void);                   // multiplex scan, called from main loop
+/*
+ * Road A = East-West: LED_*_A and seven-segment digits EN0/EN1 (a1..g1).
+ * Road B = North-South: LED_*_B and seven-segment digits EN2/EN3 (a..g).
+ */
+void LED_Display_Init(void);
+void LED_Display_SetTraffic(TrafficColor road_a, TrafficColor road_b);
+void LED_Display_BlinkBothRoads(TrafficColor color, uint8_t turn_on);
+void LED_Display_SetNumbers(uint8_t road_a_value, uint8_t road_b_value);
+/* Call repeatedly from the main superloop; it never blocks. */
+void LED_Display_Task(void);
 
 #endif /* INC_LED_DISPLAY_H_ */

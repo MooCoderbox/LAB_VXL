@@ -1,0 +1,6 @@
+software_timer.c:12:6:SoftwareTimer_Init	4	static
+software_timer.c:17:10:SoftwareTimer_GetTick	8	static
+software_timer.c:22:6:SoftwareTimer_Start	16	static
+software_timer.c:36:6:SoftwareTimer_Stop	16	static
+software_timer.c:43:6:SoftwareTimer_IsExpired	24	static
+software_timer.c:61:10:SoftwareTimer_RemainingMs	24	static

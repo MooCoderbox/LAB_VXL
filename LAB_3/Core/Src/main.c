@@ -18,12 +18,18 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <software_timer.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "config.h"
-#include "timer.h"
+#include "software_timer.h"
+#include "button.h"
+#include "led_display.h"
+#include "fsm_setting.h"
+#include "fsm_automatic.h"
+#include "fsm_manual.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,7 +51,7 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-int hour = 15, minute = 8, second = 50;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -53,9 +59,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
-void update7SEG(int index);
-void display7SEG(int num);
-void updateClockBuffer(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -93,22 +97,40 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  // HAL_TIM_Base_Start_IT (& htim2 );
-  timer_init();
-  set_timer(TIMER_SEC, SEC_MS);
+  SoftwareTimer_Init();
+      Button_Init();
+      LED_Display_Init();
+      FSM_Setting_Init();
+      FSM_Automatic_Enter();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+      HAL_TIM_Base_Start_IT(&htim2);
 
+          uint8_t manual_mode_active = 0U;
   while (1)
   {
-	  //fsm_for_input_processing();
+	  uint8_t btn1 = Button_GetPressedEvent(BUTTON_MODE);
+	          uint8_t btn2 = Button_GetPressedEvent(BUTTON_INCREMENT);
+	          uint8_t btn3 = Button_GetPressedEvent(BUTTON_CONFIRM);
 
-	  if (is_timer_expired(TIMER_SEC)) {
-	          set_timer(TIMER_SEC, SEC_MS);
-	          HAL_GPIO_TogglePin(GPIOA, LED_RED_A_Pin);
-	   }
+	          if (manual_mode_active == 0U) {
+	              if (btn1 != 0U) {
+	                  FSM_Manual_Enter();
+	                  manual_mode_active = 1U;
+	              } else {
+	                  FSM_Automatic_Run();
+	              }
+	          } else {
+	              if (FSM_Manual_Update(btn1, btn2, btn3) != 0U) {
+	                  manual_mode_active = 0U;
+	                  FSM_Automatic_Enter();
+	              }
+	          }
+
+	          /* Keep this in the superloop; it multiplexes four 7-segment digits. */
+	          LED_Display_Task();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
