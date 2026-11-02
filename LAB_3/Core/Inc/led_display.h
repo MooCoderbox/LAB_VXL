@@ -1,10 +1,3 @@
-/*
- * led_display.h
- *
- *  Created on: Nov 1, 2026
- *      Author: DELL
- */
-
 #ifndef INC_LED_DISPLAY_H_
 #define INC_LED_DISPLAY_H_
 

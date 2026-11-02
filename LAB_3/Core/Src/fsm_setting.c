@@ -1,10 +1,3 @@
-/*
- * input_reading.c
- *
- *  Created on: Nov 1, 2026
- *      Author: DELL
- */
-
 #include "fsm_setting.h"
 #include "config.h"
 

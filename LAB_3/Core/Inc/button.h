@@ -1,10 +1,3 @@
-/*
- * input_processing.h
- *
- *  Created on: Nov 1, 2026
- *      Author: DELL
- */
-
 #ifndef INC_BUTTON_H_
 #define INC_BUTTON_H_
 
@@ -18,7 +11,7 @@ typedef enum {
 } ButtonId;
 
 void Button_Init(void);
-/* Call this function from the TIM2 interrupt callback every 10 ms. */
+/* Call this function from the TIM2 callback every BUTTON_SCAN_PERIOD_MS (10 ms). */
 void Button_ScanISR(void);
 /* Returns 1 once for each debounced press; then clears the event. */
 uint8_t Button_GetPressedEvent(ButtonId id);

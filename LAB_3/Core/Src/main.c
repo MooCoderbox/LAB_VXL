@@ -97,40 +97,45 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  SoftwareTimer_Init();
-      Button_Init();
-      LED_Display_Init();
-      FSM_Setting_Init();
-      FSM_Automatic_Enter();
+ SoftwareTimer_Init();
+Button_Init();
+LED_Display_Init();
+FSM_Setting_Init();
+FSM_Automatic_Enter();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-      HAL_TIM_Base_Start_IT(&htim2);
+     if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK) {
+    Error_Handler();
+}
 
-          uint8_t manual_mode_active = 0U;
+uint8_t manual_mode_active = 0U;
+
   while (1)
   {
 	  uint8_t btn1 = Button_GetPressedEvent(BUTTON_MODE);
-	          uint8_t btn2 = Button_GetPressedEvent(BUTTON_INCREMENT);
-	          uint8_t btn3 = Button_GetPressedEvent(BUTTON_CONFIRM);
+    uint8_t btn2 = Button_GetPressedEvent(BUTTON_INCREMENT);
+    uint8_t btn3 = Button_GetPressedEvent(BUTTON_CONFIRM);
 
-	          if (manual_mode_active == 0U) {
-	              if (btn1 != 0U) {
-	                  FSM_Manual_Enter();
-	                  manual_mode_active = 1U;
-	              } else {
-	                  FSM_Automatic_Run();
-	              }
-	          } else {
-	              if (FSM_Manual_Update(btn1, btn2, btn3) != 0U) {
-	                  manual_mode_active = 0U;
-	                  FSM_Automatic_Enter();
-	              }
-	          }
+    if (manual_mode_active == 0U) {
+        if (btn1 != 0U) {
+            FSM_Manual_Enter();
+            manual_mode_active = 1U;
+        } else {
+            FSM_Automatic_Run();
+        }
+    } else {
+        if (FSM_Manual_Update(btn1, btn2, btn3) != 0U) {
+            manual_mode_active = 0U;
+            FSM_Automatic_Enter();
+        }
+    }
 
-	          /* Keep this in the superloop; it multiplexes four 7-segment digits. */
-	          LED_Display_Task();
+    /* Non-blocking multiplex scan; called continuously from main(). */
+    LED_Display_Task();
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

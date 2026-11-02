@@ -1,15 +1,11 @@
-/*
- * led_display.c
- *
- *  Created on: Nov 1, 2026
- *      Author: DELL
- */
 #include "main.h"
 #include "led_display.h"
 #include "config.h"
+#include "software_timer.h"
 
+/* Segment lookup table from the supplied Common-Anode example: 0 = ON. */
 static const uint8_t digit_segments[10][7] = {
-    /* a, b, c, d, e, f, g. 0 = segment ON for common-anode wiring. */
+    /* a, b, c, d, e, f, g */
     {0, 0, 0, 0, 0, 0, 1}, /* 0 */
     {1, 0, 0, 1, 1, 1, 1}, /* 1 */
     {0, 0, 1, 0, 0, 1, 0}, /* 2 */
@@ -22,15 +18,16 @@ static const uint8_t digit_segments[10][7] = {
     {0, 0, 0, 0, 1, 0, 0}  /* 9 */
 };
 
-static volatile uint8_t road_a_number = 0U;
-static volatile uint8_t road_b_number = 0U;
-static uint8_t current_digit = 3U;
-static uint32_t last_scan_ms = 0U;
+/* These values are written by the main loop and read by LED_Display_Task(). */
+static uint8_t road_a_number;
+static uint8_t road_b_number;
+static uint8_t current_digit;
 
 static void write_road_a_segments(uint8_t number)
 {
     const uint8_t *s = digit_segments[number % 10U];
-    /* The a1..g1 segment bank is connected to GPIOB. */
+
+    /* Road A / EW uses the a1..g1 segment bank on GPIOB. */
     HAL_GPIO_WritePin(GPIOB, a1_Pin, s[0] ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(GPIOB, b1_Pin, s[1] ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(GPIOB, c1_Pin, s[2] ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -43,7 +40,8 @@ static void write_road_a_segments(uint8_t number)
 static void write_road_b_segments(uint8_t number)
 {
     const uint8_t *s = digit_segments[number % 10U];
-    /* The a..g segment bank is connected to GPIOA. */
+
+    /* Road B / NS uses the a..g segment bank on GPIOA. */
     HAL_GPIO_WritePin(GPIOA, a_Pin, s[0] ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(GPIOA, b_Pin, s[1] ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(GPIOA, c_Pin, s[2] ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -73,43 +71,29 @@ static void enable_digit(uint16_t pin)
 
 static void set_road_a_color(TrafficColor color)
 {
-    uint16_t all = LED_RED_A_Pin | LED_YEL_A_Pin | LED_GRE_A_Pin;
-    HAL_GPIO_WritePin(GPIOA, all, GPIO_PIN_RESET);
+    const uint16_t all_road_a = LED_RED_A_Pin | LED_YEL_A_Pin | LED_GRE_A_Pin;
+    HAL_GPIO_WritePin(GPIOA, all_road_a, GPIO_PIN_RESET);
 
     switch (color) {
-    case TRAFFIC_RED:
-        HAL_GPIO_WritePin(GPIOA, LED_RED_A_Pin, GPIO_PIN_SET);
-        break;
-    case TRAFFIC_YELLOW:
-        HAL_GPIO_WritePin(GPIOA, LED_YEL_A_Pin, GPIO_PIN_SET);
-        break;
-    case TRAFFIC_GREEN:
-        HAL_GPIO_WritePin(GPIOA, LED_GRE_A_Pin, GPIO_PIN_SET);
-        break;
+    case TRAFFIC_RED:    HAL_GPIO_WritePin(GPIOA, LED_RED_A_Pin, GPIO_PIN_SET); break;
+    case TRAFFIC_YELLOW: HAL_GPIO_WritePin(GPIOA, LED_YEL_A_Pin, GPIO_PIN_SET); break;
+    case TRAFFIC_GREEN:  HAL_GPIO_WritePin(GPIOA, LED_GRE_A_Pin, GPIO_PIN_SET); break;
     case TRAFFIC_OFF:
-    default:
-        break;
+    default: break;
     }
 }
 
 static void set_road_b_color(TrafficColor color)
 {
-    uint16_t all = LED_RED_B_Pin | LED_YEL_B_Pin | LED_GRE_B_Pin;
-    HAL_GPIO_WritePin(GPIOA, all, GPIO_PIN_RESET);
+    const uint16_t all_road_b = LED_RED_B_Pin | LED_YEL_B_Pin | LED_GRE_B_Pin;
+    HAL_GPIO_WritePin(GPIOA, all_road_b, GPIO_PIN_RESET);
 
     switch (color) {
-    case TRAFFIC_RED:
-        HAL_GPIO_WritePin(GPIOA, LED_RED_B_Pin, GPIO_PIN_SET);
-        break;
-    case TRAFFIC_YELLOW:
-        HAL_GPIO_WritePin(GPIOA, LED_YEL_B_Pin, GPIO_PIN_SET);
-        break;
-    case TRAFFIC_GREEN:
-        HAL_GPIO_WritePin(GPIOA, LED_GRE_B_Pin, GPIO_PIN_SET);
-        break;
+    case TRAFFIC_RED:    HAL_GPIO_WritePin(GPIOA, LED_RED_B_Pin, GPIO_PIN_SET); break;
+    case TRAFFIC_YELLOW: HAL_GPIO_WritePin(GPIOA, LED_YEL_B_Pin, GPIO_PIN_SET); break;
+    case TRAFFIC_GREEN:  HAL_GPIO_WritePin(GPIOA, LED_GRE_B_Pin, GPIO_PIN_SET); break;
     case TRAFFIC_OFF:
-    default:
-        break;
+    default: break;
     }
 }
 
@@ -119,7 +103,7 @@ void LED_Display_Init(void)
     set_road_b_color(TRAFFIC_OFF);
     disable_all_digits();
 
-    /* Turn all segment outputs OFF (the segment bank is active-low). */
+    /* Turn all segments OFF before multiplex scanning starts. */
     HAL_GPIO_WritePin(GPIOA, a_Pin | b_Pin | c_Pin | d_Pin | e_Pin | f_Pin | g_Pin,
                       GPIO_PIN_SET);
     HAL_GPIO_WritePin(GPIOB, a1_Pin | b1_Pin | c1_Pin | d1_Pin |
@@ -128,7 +112,9 @@ void LED_Display_Init(void)
     road_a_number = 0U;
     road_b_number = 0U;
     current_digit = 3U;
-    last_scan_ms = HAL_GetTick();
+
+    /* First scan takes place after one configured scan interval. */
+    SoftwareTimer_Start(SOFT_TIMER_DISPLAY_SCAN, SEVENSEG_SCAN_INTERVAL_MS);
 }
 
 void LED_Display_SetTraffic(TrafficColor road_a, TrafficColor road_b)
@@ -140,6 +126,7 @@ void LED_Display_SetTraffic(TrafficColor road_a, TrafficColor road_b)
 void LED_Display_BlinkBothRoads(TrafficColor color, uint8_t turn_on)
 {
     if (turn_on != 0U) {
+        /* In manual modes, the selected color on BOTH roads blinks together. */
         LED_Display_SetTraffic(color, color);
     } else {
         LED_Display_SetTraffic(TRAFFIC_OFF, TRAFFIC_OFF);
@@ -148,48 +135,45 @@ void LED_Display_BlinkBothRoads(TrafficColor color, uint8_t turn_on)
 
 void LED_Display_SetNumbers(uint8_t road_a_value, uint8_t road_b_value)
 {
-    if (road_a_value > 99U) road_a_value = 99U;
-    if (road_b_value > 99U) road_b_value = 99U;
-
-    road_a_number = road_a_value;
-    road_b_number = road_b_value;
+    road_a_number = (road_a_value > 99U) ? 99U : road_a_value;
+    road_b_number = (road_b_value > 99U) ? 99U : road_b_value;
 }
 
-/* One digit is refreshed every 2 ms: all four digits refresh at 125 Hz. */
 void LED_Display_Task(void)
 {
-    uint32_t now = HAL_GetTick();
     uint8_t value;
 
-    if ((now - last_scan_ms) < SEVENSEG_SCAN_INTERVAL_MS) {
+    /* Poll a timer flag: no delay and no waiting inside the display driver. */
+    if (SoftwareTimer_IsExpired(SOFT_TIMER_DISPLAY_SCAN) == 0U) {
         return;
     }
-    last_scan_ms = now;
+    SoftwareTimer_Start(SOFT_TIMER_DISPLAY_SCAN, SEVENSEG_SCAN_INTERVAL_MS);
+
     current_digit = (uint8_t)((current_digit + 1U) % 4U);
 
-    /* Disable before changing segment lines to prevent ghosting. */
+    /* Disable all digits before changing segment data to avoid ghosting. */
     disable_all_digits();
 
     switch (current_digit) {
-    case 0U: /* EN0: road A tens */
+    case 0U: /* EN0: EW tens digit. */
         value = (uint8_t)(road_a_number / 10U);
         write_road_a_segments(value);
         enable_digit(EN0_Pin);
         break;
 
-    case 1U: /* EN1: road A units */
+    case 1U: /* EN1: EW units digit. */
         value = (uint8_t)(road_a_number % 10U);
         write_road_a_segments(value);
         enable_digit(EN1_Pin);
         break;
 
-    case 2U: /* EN2: road B tens */
+    case 2U: /* EN2: NS tens digit. */
         value = (uint8_t)(road_b_number / 10U);
         write_road_b_segments(value);
         enable_digit(EN2_Pin);
         break;
 
-    case 3U: /* EN3: road B units */
+    case 3U: /* EN3: NS units digit. */
     default:
         value = (uint8_t)(road_b_number % 10U);
         write_road_b_segments(value);

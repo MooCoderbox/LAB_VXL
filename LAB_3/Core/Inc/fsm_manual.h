@@ -1,10 +1,3 @@
-/*
- * traffic_fsm.h
- *
- *  Created on: Nov 2, 2026
- *      Author: DELL
- */
-
 #ifndef INC_FSM_MANUAL_H_
 #define INC_FSM_MANUAL_H_
 
@@ -21,4 +14,3 @@ uint8_t FSM_Manual_Update(uint8_t button1_event,
 uint8_t FSM_Manual_GetMode(void);
 
 #endif /* INC_FSM_MANUAL_H_ */
-

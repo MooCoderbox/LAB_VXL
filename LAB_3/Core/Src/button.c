@@ -1,9 +1,3 @@
-/*
- * input_processing.c
- *
- *  Created on: Nov 1, 2026
- *      Author: DELL
- */
 #include "main.h"
 #include "button.h"
 #include "config.h"
@@ -90,4 +84,3 @@ uint8_t Button_GetPressedEvent(ButtonId id)
 
     return event;
 }
-

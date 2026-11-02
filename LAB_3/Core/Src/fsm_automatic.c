@@ -1,11 +1,3 @@
-/*
- * fsm_automatic.c
- *
- *  Created on: Nov 2, 2026
- *      Author: DELL
- */
-
-
 #include "fsm_automatic.h"
 #include "software_timer.h"
 #include "fsm_setting.h"
@@ -19,15 +11,13 @@ typedef enum {
     AUTO_A_YELLOW_B_RED
 } AutomaticState;
 
-static AutomaticState current_state = AUTO_A_RED_B_GREEN;
-static SoftwareTimer state_timer;
-static uint8_t initialized = 0U;
+static AutomaticState current_state;
+static uint8_t initialized;
 
 static uint8_t milliseconds_to_seconds_ceil(uint32_t milliseconds)
 {
     uint32_t seconds = (milliseconds + 999U) / 1000U;
-    if (seconds > 99U) seconds = 99U;
-    return (uint8_t)seconds;
+    return (uint8_t)((seconds > 99U) ? 99U : seconds);
 }
 
 static void enter_state(AutomaticState next_state)
@@ -38,6 +28,7 @@ static void enter_state(AutomaticState next_state)
 
     current_state = next_state;
 
+    /* Set the physical lamp pattern and duration associated with this phase. */
     switch (current_state) {
     case AUTO_A_RED_B_GREEN:
         LED_Display_SetTraffic(TRAFFIC_RED, TRAFFIC_GREEN);
@@ -61,13 +52,13 @@ static void enter_state(AutomaticState next_state)
         break;
     }
 
-    SoftwareTimer_Start(&state_timer, duration_ms);
+    SoftwareTimer_Start(SOFT_TIMER_AUTO_PHASE, duration_ms);
     initialized = 1U;
 }
 
 void FSM_Automatic_Enter(void)
 {
-    /* INIT -> RED_GREEN in the supplied FSM diagram: A red, B green. */
+    /* INIT -> RED_GREEN in the provided diagram: A red, B green. */
     enter_state(AUTO_A_RED_B_GREEN);
 }
 
@@ -77,21 +68,14 @@ void FSM_Automatic_Run(void)
         FSM_Automatic_Enter();
     }
 
-    if (SoftwareTimer_IsExpired(&state_timer)) {
+    /* The timer flag is consumed once; state changes happen in the main loop. */
+    if (SoftwareTimer_IsExpired(SOFT_TIMER_AUTO_PHASE) != 0U) {
         switch (current_state) {
-        case AUTO_A_RED_B_GREEN:
-            enter_state(AUTO_A_RED_B_YELLOW);
-            break;
-        case AUTO_A_RED_B_YELLOW:
-            enter_state(AUTO_A_GREEN_B_RED);
-            break;
-        case AUTO_A_GREEN_B_RED:
-            enter_state(AUTO_A_YELLOW_B_RED);
-            break;
+        case AUTO_A_RED_B_GREEN:  enter_state(AUTO_A_RED_B_YELLOW); break;
+        case AUTO_A_RED_B_YELLOW: enter_state(AUTO_A_GREEN_B_RED);  break;
+        case AUTO_A_GREEN_B_RED:  enter_state(AUTO_A_YELLOW_B_RED); break;
         case AUTO_A_YELLOW_B_RED:
-        default:
-            enter_state(AUTO_A_RED_B_GREEN);
-            break;
+        default:                  enter_state(AUTO_A_RED_B_GREEN);  break;
         }
     }
 
@@ -106,10 +90,9 @@ void FSM_Automatic_Run(void)
 void FSM_Automatic_GetRemaining(uint8_t *road_a_seconds,
                                 uint8_t *road_b_seconds)
 {
-    uint8_t green = FSM_Setting_GetValue(SETTING_GREEN);
     uint8_t yellow = FSM_Setting_GetValue(SETTING_YELLOW);
     uint8_t remaining = milliseconds_to_seconds_ceil(
-        SoftwareTimer_RemainingMs(&state_timer));
+        SoftwareTimer_RemainingMs(SOFT_TIMER_AUTO_PHASE));
     uint8_t a = 0U;
     uint8_t b = 0U;
 
@@ -136,13 +119,9 @@ void FSM_Automatic_GetRemaining(uint8_t *road_a_seconds,
         break;
     }
 
-    /* The displayed red countdown is bounded by the configured 1..99 range. */
     if (a > 99U) a = 99U;
     if (b > 99U) b = 99U;
 
     if (road_a_seconds != 0) *road_a_seconds = a;
     if (road_b_seconds != 0) *road_b_seconds = b;
-
-    /* Keep compiler diagnostics clean if the timing relationship is edited. */
-    (void)green;
 }
