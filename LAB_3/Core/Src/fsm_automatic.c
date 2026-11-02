@@ -1,18 +1,9 @@
 #include "fsm_automatic.h"
+
+#include "traffic_state.h"
 #include "software_timer.h"
 #include "fsm_setting.h"
 #include "led_display.h"
-
-/* Road A = East-West; Road B = North-South. */
-typedef enum {
-    AUTO_A_RED_B_GREEN = 0,
-    AUTO_A_RED_B_YELLOW,
-    AUTO_A_GREEN_B_RED,
-    AUTO_A_YELLOW_B_RED
-} AutomaticState;
-
-static AutomaticState current_state;
-static uint8_t initialized;
 
 static uint8_t milliseconds_to_seconds_ceil(uint32_t milliseconds)
 {
@@ -20,68 +11,82 @@ static uint8_t milliseconds_to_seconds_ceil(uint32_t milliseconds)
     return (uint8_t)((seconds > 99U) ? 99U : seconds);
 }
 
-static void enter_state(AutomaticState next_state)
+static uint32_t duration_for_state_ms(TrafficState state)
 {
-    uint8_t green = FSM_Setting_GetValue(SETTING_GREEN);
-    uint8_t yellow = FSM_Setting_GetValue(SETTING_YELLOW);
-    uint32_t duration_ms;
+    switch (state) {
+    case AUTO_RED_GREEN:
+    case AUTO_GREEN_RED:
+        return (uint32_t)FSM_Setting_GetValue(SETTING_GREEN) * 1000U;
 
-    current_state = next_state;
+    case AUTO_RED_YELLOW:
+    case AUTO_YELLOW_RED:
+        return (uint32_t)FSM_Setting_GetValue(SETTING_YELLOW) * 1000U;
 
-    /* Set the physical lamp pattern and duration associated with this phase. */
-    switch (current_state) {
-    case AUTO_A_RED_B_GREEN:
-        LED_Display_SetTraffic(TRAFFIC_RED, TRAFFIC_GREEN);
-        duration_ms = (uint32_t)green * 1000U;
-        break;
-
-    case AUTO_A_RED_B_YELLOW:
-        LED_Display_SetTraffic(TRAFFIC_RED, TRAFFIC_YELLOW);
-        duration_ms = (uint32_t)yellow * 1000U;
-        break;
-
-    case AUTO_A_GREEN_B_RED:
-        LED_Display_SetTraffic(TRAFFIC_GREEN, TRAFFIC_RED);
-        duration_ms = (uint32_t)green * 1000U;
-        break;
-
-    case AUTO_A_YELLOW_B_RED:
     default:
-        LED_Display_SetTraffic(TRAFFIC_YELLOW, TRAFFIC_RED);
-        duration_ms = (uint32_t)yellow * 1000U;
+        return 0U;
+    }
+}
+
+void FSM_Automatic_Enter(TrafficState state)
+{
+    /* Entry action: write the traffic-light pattern once and arm its phase timer. */
+    switch (state) {
+    case AUTO_RED_GREEN:
+        LED_Display_SetTraffic(TRAFFIC_RED, TRAFFIC_GREEN);
         break;
+
+    case AUTO_RED_YELLOW:
+        LED_Display_SetTraffic(TRAFFIC_RED, TRAFFIC_YELLOW);
+        break;
+
+    case AUTO_GREEN_RED:
+        LED_Display_SetTraffic(TRAFFIC_GREEN, TRAFFIC_RED);
+        break;
+
+    case AUTO_YELLOW_RED:
+        LED_Display_SetTraffic(TRAFFIC_YELLOW, TRAFFIC_RED);
+        break;
+
+    default:
+        return;
     }
 
-    SoftwareTimer_Start(SOFT_TIMER_AUTO_PHASE, duration_ms);
-    initialized = 1U;
+    SoftwareTimer_Start(SOFT_TIMER_AUTO_PHASE, duration_for_state_ms(state));
 }
 
-void FSM_Automatic_Enter(void)
+void FSM_Automatic_Exit(void)
 {
-    /* INIT -> RED_GREEN in the provided diagram: A red, B green. */
-    enter_state(AUTO_A_RED_B_GREEN);
+    /* The shared transition manager calls this before entering another mode. */
+    SoftwareTimer_Stop(SOFT_TIMER_AUTO_PHASE);
 }
 
-void FSM_Automatic_Run(void)
+void FSM_Automatic_Update(uint8_t button1_event)
 {
-    if (initialized == 0U) {
-        FSM_Automatic_Enter();
+    TrafficState next_state;
+
+    /* BTN1 has priority over a phase timeout if both arrive in the same loop. */
+    if (button1_event != 0U) {
+        TrafficFSM_TransitionTo(MAN_RED);
+        return;
     }
 
-    /* The timer flag is consumed once; state changes happen in the main loop. */
     if (SoftwareTimer_IsExpired(SOFT_TIMER_AUTO_PHASE) != 0U) {
-        switch (current_state) {
-        case AUTO_A_RED_B_GREEN:  enter_state(AUTO_A_RED_B_YELLOW); break;
-        case AUTO_A_RED_B_YELLOW: enter_state(AUTO_A_GREEN_B_RED);  break;
-        case AUTO_A_GREEN_B_RED:  enter_state(AUTO_A_YELLOW_B_RED); break;
-        case AUTO_A_YELLOW_B_RED:
-        default:                  enter_state(AUTO_A_RED_B_GREEN);  break;
+        switch (status) {
+        case AUTO_RED_GREEN:  next_state = AUTO_RED_YELLOW;  break;
+        case AUTO_RED_YELLOW: next_state = AUTO_GREEN_RED;   break;
+        case AUTO_GREEN_RED:  next_state = AUTO_YELLOW_RED;  break;
+        case AUTO_YELLOW_RED: next_state = AUTO_RED_GREEN;   break;
+        default:              return;
         }
+
+        TrafficFSM_TransitionTo(next_state);
     }
 
+    /* Refresh the display buffer; LED_Display_Task() performs physical scanning. */
     {
         uint8_t road_a_remaining;
         uint8_t road_b_remaining;
+
         FSM_Automatic_GetRemaining(&road_a_remaining, &road_b_remaining);
         LED_Display_SetNumbers(road_a_remaining, road_b_remaining);
     }
@@ -93,76 +98,40 @@ void FSM_Automatic_GetRemaining(uint8_t *road_a_seconds,
     uint8_t yellow = FSM_Setting_GetValue(SETTING_YELLOW);
     uint8_t remaining = milliseconds_to_seconds_ceil(
         SoftwareTimer_RemainingMs(SOFT_TIMER_AUTO_PHASE));
-    uint8_t a = 0U;
-    uint8_t b = 0U;
+    uint8_t road_a = 0U;
+    uint8_t road_b = 0U;
 
-    switch (current_state) {
-    case AUTO_A_RED_B_GREEN:
-        a = (uint8_t)(remaining + yellow); /* A red includes B green + B yellow. */
-        b = remaining;
-        break;
-
-    case AUTO_A_RED_B_YELLOW:
-        a = remaining;
-        b = remaining;
-        break;
-
-    case AUTO_A_GREEN_B_RED:
-        a = remaining;
-        b = (uint8_t)(remaining + yellow);
-        break;
-
-    case AUTO_A_YELLOW_B_RED:
-    default:
-        a = remaining;
-        b = remaining;
-        break;
-    }
-
-    if (a > 99U) a = 99U;
-    if (b > 99U) b = 99U;
-
-    if (road_a_seconds != 0) *road_a_seconds = a;
-    if (road_b_seconds != 0) *road_b_seconds = b;
-}
-
-void FSM_Automatic_Update(void)
-{
+    /* RED on one road includes the other road's green plus yellow phases. */
     switch (status) {
-
     case AUTO_RED_GREEN:
-
-        if (SoftwareTimer_IsExpired(SOFT_TIMER_AUTO_PHASE)) {
-            FSM_TransitionTo(AUTO_RED_YELLOW);
-        }
-
+        road_a = (uint8_t)(remaining + yellow);
+        road_b = remaining;
         break;
 
     case AUTO_RED_YELLOW:
-
-        if (SoftwareTimer_IsExpired(SOFT_TIMER_AUTO_PHASE)) {
-            FSM_TransitionTo(AUTO_GREEN_RED);
-        }
-
+        road_a = remaining;
+        road_b = remaining;
         break;
 
     case AUTO_GREEN_RED:
-
-        if (SoftwareTimer_IsExpired(SOFT_TIMER_AUTO_PHASE)) {
-            FSM_TransitionTo(AUTO_YELLOW_RED);
-        }
-
+        road_a = remaining;
+        road_b = (uint8_t)(remaining + yellow);
         break;
 
     case AUTO_YELLOW_RED:
-
-        if (SoftwareTimer_IsExpired(SOFT_TIMER_AUTO_PHASE)) {
-            FSM_TransitionTo(AUTO_RED_GREEN);
-        }
-
+        road_a = remaining;
+        road_b = remaining;
         break;
 
     default:
+        road_a = 0U;
+        road_b = 0U;
         break;
     }
+
+    if (road_a > 99U) road_a = 99U;
+    if (road_b > 99U) road_b = 99U;
+
+    if (road_a_seconds != 0) *road_a_seconds = road_a;
+    if (road_b_seconds != 0) *road_b_seconds = road_b;
 }

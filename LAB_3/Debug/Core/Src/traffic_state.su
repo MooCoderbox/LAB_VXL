@@ -1,0 +1,5 @@
+traffic_state.c:10:16:is_automatic_state	16	static
+traffic_state.c:15:16:is_manual_state	16	static
+traffic_state.c:20:6:TrafficFSM_Init	8	static
+traffic_state.c:27:6:TrafficFSM_TransitionTo	24	static
+traffic_state.c:64:6:TrafficFSM_Update	16	static

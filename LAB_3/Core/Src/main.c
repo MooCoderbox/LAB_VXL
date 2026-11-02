@@ -28,8 +28,7 @@
 #include "button.h"
 #include "led_display.h"
 #include "fsm_setting.h"
-#include "fsm_automatic.h"
-#include "fsm_manual.h"
+#include "traffic_state.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -97,44 +96,39 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
- SoftwareTimer_Init();
-Button_Init();
-LED_Display_Init();
-FSM_Setting_Init();
-FSM_Automatic_Enter();
+  SoftwareTimer_Init();
+  Button_Init();
+  LED_Display_Init();
+  FSM_Setting_Init();
+  TrafficFSM_Init();
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-     if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK) {
-    Error_Handler();
-}
+  /* Enter the first phase. This writes the initial lamps and starts AUTO_PHASE. */
+  TrafficFSM_TransitionTo(AUTO_RED_GREEN);
+
+  /* Start TIM2 only after all software modules and initial state are ready. */
+  if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK) {
+      Error_Handler();
+  }
 
 uint8_t manual_mode_active = 0U;
 
   while (1)
   {
-	  uint8_t btn1 = Button_GetPressedEvent(BUTTON_MODE);
-    uint8_t btn2 = Button_GetPressedEvent(BUTTON_INCREMENT);
-    uint8_t btn3 = Button_GetPressedEvent(BUTTON_CONFIRM);
+	  /* These are debounced one-shot events produced by the TIM2 scan routine. */
+	      uint8_t btn1 = Button_GetPressedEvent(BUTTON_MODE);
+	      uint8_t btn2 = Button_GetPressedEvent(BUTTON_INCREMENT);
+	      uint8_t btn3 = Button_GetPressedEvent(BUTTON_CONFIRM);
 
-    if (manual_mode_active == 0U) {
-        if (btn1 != 0U) {
-            FSM_Manual_Enter();
-            manual_mode_active = 1U;
-        } else {
-            FSM_Automatic_Run();
-        }
-    } else {
-        if (FSM_Manual_Update(btn1, btn2, btn3) != 0U) {
-            manual_mode_active = 0U;
-            FSM_Automatic_Enter();
-        }
-    }
+	      /* One global status selects exactly one FSM module for this iteration. */
+	      TrafficFSM_Update(btn1, btn2, btn3);
 
-    /* Non-blocking multiplex scan; called continuously from main(). */
-    LED_Display_Task();
+	      /* Non-blocking display multiplexing remains active in every state. */
+	      LED_Display_Task();
+
 
     /* USER CODE END WHILE */
 

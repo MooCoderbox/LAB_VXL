@@ -17,7 +17,8 @@ C_SRCS += \
 ../Core/Src/syscalls.c \
 ../Core/Src/sysmem.c \
 ../Core/Src/system_stm32f1xx.c \
-../Core/Src/timer_callback.c 
+../Core/Src/timer_callback.c \
+../Core/Src/traffic_state.c 
 
 OBJS += \
 ./Core/Src/button.o \
@@ -32,7 +33,8 @@ OBJS += \
 ./Core/Src/syscalls.o \
 ./Core/Src/sysmem.o \
 ./Core/Src/system_stm32f1xx.o \
-./Core/Src/timer_callback.o 
+./Core/Src/timer_callback.o \
+./Core/Src/traffic_state.o 
 
 C_DEPS += \
 ./Core/Src/button.d \
@@ -47,7 +49,8 @@ C_DEPS += \
 ./Core/Src/syscalls.d \
 ./Core/Src/sysmem.d \
 ./Core/Src/system_stm32f1xx.d \
-./Core/Src/timer_callback.d 
+./Core/Src/timer_callback.d \
+./Core/Src/traffic_state.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
