@@ -1,8 +1,8 @@
-fsm_setting.c:23:16:get_maximum_edit_value	4	static
-fsm_setting.c:37:6:FSM_Setting_Init	4	static
-fsm_setting.c:47:6:FSM_Setting_BeginEdit	16	static
-fsm_setting.c:53:6:FSM_Setting_Increment	16	static
-fsm_setting.c:69:9:FSM_Setting_Commit	8	static
-fsm_setting.c:111:9:FSM_Setting_GetEditValue	4	static
-fsm_setting.c:116:9:FSM_Setting_GetValue	16	static
-fsm_setting.c:126:6:FSM_Setting_GetAll	24	static
+fsm_setting.c:16:16:get_maximum_edit_value	4	static
+fsm_setting.c:30:6:FSM_Setting_Init	4	static
+fsm_setting.c:40:6:FSM_Setting_BeginEdit	16	static
+fsm_setting.c:46:6:FSM_Setting_Increment	16	static
+fsm_setting.c:62:9:FSM_Setting_Commit	8	static
+fsm_setting.c:104:9:FSM_Setting_GetEditValue	4	static
+fsm_setting.c:109:9:FSM_Setting_GetValue	16	static
+fsm_setting.c:119:6:FSM_Setting_GetAll	24	static

@@ -1,6 +1,10 @@
-software_timer.c:12:6:SoftwareTimer_Init	4	static
-software_timer.c:17:10:SoftwareTimer_GetTick	8	static
-software_timer.c:22:6:SoftwareTimer_Start	16	static
-software_timer.c:36:6:SoftwareTimer_Stop	16	static
-software_timer.c:43:6:SoftwareTimer_IsExpired	24	static
-software_timer.c:61:10:SoftwareTimer_RemainingMs	24	static
+software_timer.c:16:17:irq_lock	16	static,ignoring_inline_asm
+software_timer.c:23:13:irq_unlock	24	static,ignoring_inline_asm
+software_timer.c:29:17:milliseconds_to_ticks	24	static
+software_timer.c:45:6:SoftwareTimer_Init	16	static
+software_timer.c:61:6:SoftwareTimer_RunISR	16	static
+software_timer.c:83:6:SoftwareTimer_Start	24	static
+software_timer.c:101:6:SoftwareTimer_Stop	24	static
+software_timer.c:115:9:SoftwareTimer_IsExpired	24	static
+software_timer.c:133:10:SoftwareTimer_RemainingMs	24	static
+software_timer.c:150:10:SoftwareTimer_GetTickMs	16	static

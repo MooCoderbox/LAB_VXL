@@ -125,3 +125,44 @@ void FSM_Automatic_GetRemaining(uint8_t *road_a_seconds,
     if (road_a_seconds != 0) *road_a_seconds = a;
     if (road_b_seconds != 0) *road_b_seconds = b;
 }
+
+void FSM_Automatic_Update(void)
+{
+    switch (status) {
+
+    case AUTO_RED_GREEN:
+
+        if (SoftwareTimer_IsExpired(SOFT_TIMER_AUTO_PHASE)) {
+            FSM_TransitionTo(AUTO_RED_YELLOW);
+        }
+
+        break;
+
+    case AUTO_RED_YELLOW:
+
+        if (SoftwareTimer_IsExpired(SOFT_TIMER_AUTO_PHASE)) {
+            FSM_TransitionTo(AUTO_GREEN_RED);
+        }
+
+        break;
+
+    case AUTO_GREEN_RED:
+
+        if (SoftwareTimer_IsExpired(SOFT_TIMER_AUTO_PHASE)) {
+            FSM_TransitionTo(AUTO_YELLOW_RED);
+        }
+
+        break;
+
+    case AUTO_YELLOW_RED:
+
+        if (SoftwareTimer_IsExpired(SOFT_TIMER_AUTO_PHASE)) {
+            FSM_TransitionTo(AUTO_RED_GREEN);
+        }
+
+        break;
+
+    default:
+        break;
+    }
+}

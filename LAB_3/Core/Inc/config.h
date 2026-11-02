@@ -6,7 +6,7 @@
  * TIM2 must generate one update interrupt every TIM2_TICK_PERIOD_MS.
  * All software timers use this tick; they do not use HAL_GetTick().
  */
-#define TIM2_TICK_PERIOD_MS             1U
+#define TIM2_TICK_PERIOD_MS             10U
 
 /* Buttons are sampled slower than the 1 ms timer base to reduce CPU work. */
 #define BUTTON_SCAN_PERIOD_MS           10U
@@ -23,8 +23,8 @@
 #define MANUAL_BLINK_TOGGLE_MS           250U
 #define MANUAL_IDLE_TIMEOUT_MS           10000U
 
-/* Multiplex one 7-segment digit every 2 ms (4 digits = 125 Hz full refresh). */
-#define SEVENSEG_SCAN_INTERVAL_MS        2U
+/* Multiplex two 7-segment digit every 250 ms */
+#define SEVENSEG_SCAN_INTERVAL_MS        250U
 
 /* Set to 1 if digit-enable pins EN0..EN3 are active-low. */
 #define SEVENSEG_ENABLE_ACTIVE_LOW       1

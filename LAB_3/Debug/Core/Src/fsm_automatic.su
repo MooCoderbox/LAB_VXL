@@ -1,5 +1,5 @@
-fsm_automatic.c:26:16:milliseconds_to_seconds_ceil	24	static
-fsm_automatic.c:33:13:enter_state	24	static
-fsm_automatic.c:68:6:FSM_Automatic_Enter	8	static
-fsm_automatic.c:74:6:FSM_Automatic_Run	16	static
-fsm_automatic.c:106:6:FSM_Automatic_GetRemaining	24	static
+fsm_automatic.c:17:16:milliseconds_to_seconds_ceil	24	static
+fsm_automatic.c:23:13:enter_state	24	static
+fsm_automatic.c:59:6:FSM_Automatic_Enter	8	static
+fsm_automatic.c:65:6:FSM_Automatic_Run	16	static
+fsm_automatic.c:90:6:FSM_Automatic_GetRemaining	24	static

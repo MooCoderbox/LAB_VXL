@@ -1,3 +1,3 @@
-button.c:23:6:Button_Init	16	static
-button.c:47:6:Button_ScanISR	16	static
-button.c:75:9:Button_GetPressedEvent	32	static,ignoring_inline_asm
+button.c:17:6:Button_Init	16	static
+button.c:41:6:Button_ScanISR	16	static
+button.c:69:9:Button_GetPressedEvent	32	static,ignoring_inline_asm

@@ -8,5 +8,5 @@ void FSM_Automatic_Enter(void);
 void FSM_Automatic_Run(void);
 void FSM_Automatic_GetRemaining(uint8_t *road_a_seconds,
                                 uint8_t *road_b_seconds);
-
+void FSM_Automatic_Update(void);
 #endif /* INC_FSM_AUTOMATIC_H_ */
