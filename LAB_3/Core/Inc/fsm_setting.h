@@ -2,6 +2,7 @@
 #define INC_FSM_SETTING_H_
 
 #include <stdint.h>
+#include "global.h"
 
 typedef enum {
     SETTING_RED = 0,
@@ -9,12 +10,13 @@ typedef enum {
     SETTING_GREEN
 } SettingColor;
 
-void FSM_Setting_Init(void);
-void FSM_Setting_BeginEdit(SettingColor color);
-void FSM_Setting_Increment(void);
-uint8_t FSM_Setting_Commit(void);
-uint8_t FSM_Setting_GetEditValue(void);
-uint8_t FSM_Setting_GetValue(SettingColor color);
-void FSM_Setting_GetAll(uint8_t *red, uint8_t *yellow, uint8_t *green);
+extern uint8_t red_seconds;
+extern uint8_t yellow_seconds;
+extern uint8_t green_seconds;
+
+uint8_t getTimeOfSettingColor(SettingColor t);
+void fsm_setting_load(uint8_t initial_value);
+uint8_t fsm_setting_get_value(void);
+void fsm_setting_run(void);
 
 #endif /* INC_FSM_SETTING_H_ */

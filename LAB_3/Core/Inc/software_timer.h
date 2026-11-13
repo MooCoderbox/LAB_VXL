@@ -12,37 +12,40 @@ typedef enum {
     SOFT_TIMER_COUNT
 } SoftwareTimerId;
 
-/* Variables exposed for live inspection in STM32CubeIDE's Expressions/Watch view. */
-typedef struct {
-    volatile uint32_t tim2_interrupt_count;
-    volatile uint32_t system_tick_ms;
-    volatile uint32_t software_timer_expiry_count;
-} SoftwareTimerDebug;
 
-extern volatile SoftwareTimerDebug g_software_timer_debug;
-
-/* Call once before starting TIM2. Clears all software-timer channels. */
-void SoftwareTimer_Init(void);
-
-/* Call ONLY from the TIM2 update interrupt callback, once per TIM2 update. */
-void SoftwareTimer_RunISR(void);
-
-/* Start/restart a one-shot timer. Duration is expressed in milliseconds. */
-void SoftwareTimer_Start(SoftwareTimerId id, uint32_t duration_ms);
-
-/* Stop a timer and clear any pending expired flag. */
-void SoftwareTimer_Stop(SoftwareTimerId id);
-
-/*
- * Returns 1 once when a timer expires, then clears its expired flag.
- * This is intended to be polled from the main loop, not from an ISR.
+/**
+ * Initialize all software timers.
+ * Call this before starting the TIM2 interrupt.
  */
-uint8_t SoftwareTimer_IsExpired(SoftwareTimerId id);
+void software_timer_init(void);
 
-/* Snapshot remaining time in ms. Returns 0 if stopped or already expired. */
-uint32_t SoftwareTimer_RemainingMs(SoftwareTimerId id);
+/**
+ * Start/restart a one-shot software timer.
+ *
+ * timer_id:     Timer index in the range [0, SOFT_TIMER_COUNT - 1].
+ * duration_ms:  Requested duration in milliseconds.
+ *
+ * A duration of 0 expires immediately. Durations that are not an exact
+ * multiple of TIM2_TICK_PERIOD_MS are rounded up to the next tick.
+ */
+void software_timer_set(SoftwareTimerId timer_id, uint32_t duration_ms);
 
-/* Read the TIM2-driven application clock (milliseconds since initialization). */
-uint32_t SoftwareTimer_GetTickMs(void);
+/**
+ * Return 1 when the timer has expired, otherwise return 0.
+ * The expired flag remains set until the timer is restarted.
+ */
+uint8_t software_timer_is_expired(SoftwareTimerId timer_id);
+
+/**
+ * Return the timer's remaining duration in milliseconds, rounded down to
+ * the timer tick. Returns 0 for an invalid timer ID or an expired timer.
+ */
+uint32_t software_timer_get_remaining_ms(SoftwareTimerId timer_id);
+
+/**
+ * Update all software timers by one tick.
+ * Call this function once from the TIM2 period-elapsed callback.
+ */
+void software_timer_run(void);
 
 #endif /* INC_SOFTWARE_TIMER_H_ */

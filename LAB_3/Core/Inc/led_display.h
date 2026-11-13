@@ -21,4 +21,16 @@ void LED_Display_SetNumbers(uint8_t road_a_value, uint8_t road_b_value);
 /* Call repeatedly from the main superloop; it never blocks. */
 void LED_Display_Task(void);
 
+uint8_t milliseconds_to_display_seconds(uint32_t milliseconds);
+
+void task_AUTO_RED_GREEN(void);
+void task_AUTO_RED_YELLOW(void);
+void task_AUTO_GREEN_RED(void);
+void task_AUTO_YELLOW_RED(void);
+
+void LED_Display_BlinkStart(TrafficColor color);
+void task_MAN_RED(void);
+void task_MAN_YELLOW(void);
+void task_MAN_GREEN(void);
+
 #endif /* INC_LED_DISPLAY_H_ */

@@ -14,7 +14,7 @@
 #define BUTTON_SCAN_DIVIDER_TICKS       \
     ((BUTTON_SCAN_PERIOD_MS + TIM2_TICK_PERIOD_MS - 1U) / TIM2_TICK_PERIOD_MS)
 
-/* Default traffic-light durations. RED = GREEN + YELLOW for this 4-state FSM. */
+/* Default traffic-light durations. RED = GREEN + YELLOW. */
 #define DEFAULT_GREEN_SECONDS           3U
 #define DEFAULT_YELLOW_SECONDS          2U
 #define DEFAULT_RED_SECONDS             (DEFAULT_GREEN_SECONDS + DEFAULT_YELLOW_SECONDS)

@@ -1,124 +1,95 @@
 #include "fsm_setting.h"
 #include "config.h"
+#include "global.h"
+#include "button.h"
 
 /*
- * For the four-state two-road sequence, RED = GREEN + YELLOW:
- * when one road is green and then yellow, the other road remains red.
- * Keeping this invariant avoids an unsafe overlap between green/yellow phases.
+ * Traffic light durations: RED = GREEN + YELLOW.
  */
-static uint8_t red_seconds = DEFAULT_RED_SECONDS;
-static uint8_t yellow_seconds = DEFAULT_YELLOW_SECONDS;
-static uint8_t green_seconds = DEFAULT_GREEN_SECONDS;
+uint8_t red_seconds    = DEFAULT_RED_SECONDS;
+uint8_t yellow_seconds = DEFAULT_YELLOW_SECONDS;
+uint8_t green_seconds  = DEFAULT_GREEN_SECONDS;
 
-static SettingColor selected_color = SETTING_RED;
-static uint8_t edit_value = DEFAULT_RED_SECONDS;
+static uint8_t pending_value = 1U;
 
-static uint8_t get_maximum_edit_value(void)
-{
-    switch (selected_color) {
-    case SETTING_RED:
-        return 99U;
-    case SETTING_YELLOW:
-        return (uint8_t)(99U - green_seconds);
-    case SETTING_GREEN:
-        return (uint8_t)(99U - yellow_seconds);
-    default:
-        return 99U;
+uint8_t getTimeOfSettingColor(SettingColor t) {
+    switch (t) {
+        case SETTING_RED:
+            return red_seconds;
+        case SETTING_YELLOW:
+            return yellow_seconds;
+        case SETTING_GREEN:
+            return green_seconds;
+        default:
+            return 0; // invalid
     }
 }
 
-void FSM_Setting_Init(void)
+void fsm_setting_load(uint8_t initial_value)
 {
-    green_seconds = DEFAULT_GREEN_SECONDS;
-    yellow_seconds = DEFAULT_YELLOW_SECONDS;
-    red_seconds = (uint8_t)(green_seconds + yellow_seconds);
-
-    selected_color = SETTING_RED;
-    edit_value = red_seconds;
-}
-
-void FSM_Setting_BeginEdit(SettingColor color)
-{
-    selected_color = color;
-    edit_value = FSM_Setting_GetValue(color);
-}
-
-void FSM_Setting_Increment(void)
-{
-    uint8_t maximum = get_maximum_edit_value();
-    uint8_t minimum = (selected_color == SETTING_RED) ? 2U : 1U;
-
-    if (maximum < minimum) {
-        maximum = minimum;
-    }
-
-    if ((edit_value >= maximum) || (edit_value < minimum)) {
-        edit_value = minimum;
+    if (initial_value < 1U) {
+        pending_value = 1U;
+    } else if (initial_value > 99U) {
+        pending_value = 99U;
     } else {
-        edit_value++;
+        pending_value = initial_value;
     }
 }
 
-uint8_t FSM_Setting_Commit(void)
+uint8_t fsm_setting_get_value(void)
 {
-    switch (selected_color) {
-    case SETTING_RED:
-        /* At least one second of green and one second of yellow are required. */
-        if (edit_value < 2U) {
-            edit_value = 2U;
-        }
-        red_seconds = edit_value;
+    return pending_value;
+}
 
-        /* Preserve yellow when possible; the remaining red interval becomes green. */
-        if (yellow_seconds >= red_seconds) {
-            yellow_seconds = (uint8_t)(red_seconds - 1U);
+void fsm_setting_run(void)
+{
+    if ((status_fsm != MAN_RED) &&
+        (status_fsm != MAN_YELLOW) &&
+        (status_fsm != MAN_GREEN)) {
+        return;
+    }
+
+    if (isButton2Pressed()) {
+        pending_value = (pending_value >= 99U) ? 1U : (pending_value + 1U);
+    }
+
+    switch (status_fsm) {
+    case MAN_RED: /* Mode 2: save RED duration, keep RED = YELLOW + GREEN */
+        if (isButton3Pressed()) {
+            red_seconds = pending_value;
+            if (red_seconds > yellow_seconds) {
+                green_seconds = red_seconds - yellow_seconds;
+            } else if (red_seconds >= 2U) {
+                yellow_seconds = 1U;
+                green_seconds = red_seconds - 1U;
+            } else {
+                yellow_seconds = 0U;
+                green_seconds = 1U;
+            }
         }
-        green_seconds = (uint8_t)(red_seconds - yellow_seconds);
         break;
 
-    case SETTING_YELLOW:
-        if (edit_value < 1U) edit_value = 1U;
-        if (edit_value > (uint8_t)(99U - green_seconds)) {
-            edit_value = (uint8_t)(99U - green_seconds);
+    case MAN_YELLOW: /* Mode 3: save AMBER duration, keep RED = YELLOW + GREEN */
+        if (isButton3Pressed()) {
+            yellow_seconds = pending_value;
+            if ((uint16_t)green_seconds + yellow_seconds > 99U) {
+                green_seconds = 99U - yellow_seconds;
+            }
+            red_seconds = green_seconds + yellow_seconds;
         }
-        yellow_seconds = edit_value;
-        red_seconds = (uint8_t)(green_seconds + yellow_seconds);
         break;
 
-    case SETTING_GREEN:
-        if (edit_value < 1U) edit_value = 1U;
-        if (edit_value > (uint8_t)(99U - yellow_seconds)) {
-            edit_value = (uint8_t)(99U - yellow_seconds);
+    case MAN_GREEN: /* Mode 4: save GREEN duration, keep RED = YELLOW + GREEN */
+        if (isButton3Pressed()) {
+            green_seconds = pending_value;
+            if ((uint16_t)green_seconds + yellow_seconds > 99U) {
+                yellow_seconds = 99U - green_seconds;
+            }
+            red_seconds = green_seconds + yellow_seconds;
         }
-        green_seconds = edit_value;
-        red_seconds = (uint8_t)(green_seconds + yellow_seconds);
         break;
 
     default:
         break;
     }
-
-    return FSM_Setting_GetValue(selected_color);
-}
-
-uint8_t FSM_Setting_GetEditValue(void)
-{
-    return edit_value;
-}
-
-uint8_t FSM_Setting_GetValue(SettingColor color)
-{
-    switch (color) {
-    case SETTING_RED:    return red_seconds;
-    case SETTING_YELLOW: return yellow_seconds;
-    case SETTING_GREEN:  return green_seconds;
-    default:             return 0U;
-    }
-}
-
-void FSM_Setting_GetAll(uint8_t *red, uint8_t *yellow, uint8_t *green)
-{
-    if (red != 0) *red = red_seconds;
-    if (yellow != 0) *yellow = yellow_seconds;
-    if (green != 0) *green = green_seconds;
 }

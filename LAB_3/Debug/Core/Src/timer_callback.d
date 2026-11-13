@@ -23,7 +23,10 @@ Core/Src/timer_callback.o: ../Core/Src/timer_callback.c \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
- ../Core/Inc/config.h ../Core/Inc/software_timer.h ../Core/Inc/button.h
+ ../Core/Inc/config.h ../Core/Inc/software_timer.h ../Core/Inc/button.h \
+ ../Core/Inc/main.h ../Core/Inc/global.h ../Core/Inc/config.h \
+ ../Core/Inc/software_timer.h ../Core/Inc/button.h \
+ ../Core/Inc/led_display.h ../Core/Inc/fsm_setting.h ../Core/Inc/global.h
 
 ../Core/Inc/main.h:
 
@@ -80,3 +83,19 @@ Core/Src/timer_callback.o: ../Core/Src/timer_callback.c \
 ../Core/Inc/software_timer.h:
 
 ../Core/Inc/button.h:
+
+../Core/Inc/main.h:
+
+../Core/Inc/global.h:
+
+../Core/Inc/config.h:
+
+../Core/Inc/software_timer.h:
+
+../Core/Inc/button.h:
+
+../Core/Inc/led_display.h:
+
+../Core/Inc/fsm_setting.h:
+
+../Core/Inc/global.h:

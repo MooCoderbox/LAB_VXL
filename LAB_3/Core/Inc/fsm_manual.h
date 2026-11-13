@@ -2,7 +2,6 @@
 #define INC_FSM_MANUAL_H_
 
 #include <stdint.h>
-#include "traffic_state.h"
 
 /*
  * Debug values for STM32CubeIDE Expressions/Live Expressions.
@@ -22,7 +21,6 @@ typedef struct {
 extern volatile FSMManualDebug g_fsm_manual_debug;
 
 /* Called by the central dispatcher when entering/leaving a MAN state. */
-void FSM_Manual_Enter(TrafficState state);
 void FSM_Manual_Exit(void);
 
 /* Processes BTN1/BTN2/BTN3 and manual-mode timer flags. */
@@ -32,5 +30,8 @@ void FSM_Manual_Update(uint8_t button1_event,
 
 /* Returns 2, 3, or 4 according to the current shared status. */
 uint8_t FSM_Manual_GetMode(void);
+
+void fsm_manual_enter_red(void);
+void fsm_manual_run(void);
 
 #endif /* INC_FSM_MANUAL_H_ */

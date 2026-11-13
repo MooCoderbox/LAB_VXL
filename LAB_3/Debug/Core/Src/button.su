@@ -1,3 +1,5 @@
-button.c:17:6:Button_Init	16	static
-button.c:41:6:Button_ScanISR	16	static
-button.c:69:9:Button_GetPressedEvent	32	static,ignoring_inline_asm
+button.c:105:12:isButtonPressed	16	static
+button.c:113:5:isButton1Pressed	8	static
+button.c:117:5:isButton2Pressed	8	static
+button.c:121:5:isButton3Pressed	8	static
+button.c:125:6:getKeyInput	16	static

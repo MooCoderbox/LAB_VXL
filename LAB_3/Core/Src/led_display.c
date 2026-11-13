@@ -86,31 +86,81 @@ static void enable_digits(uint16_t pins)
 #endif
 }
 
+// static void set_road_a_color(TrafficColor color)
+// {
+//     const uint16_t all_road_a = LED_RED_A_Pin | LED_YEL_A_Pin | LED_GRE_A_Pin;
+//     HAL_GPIO_WritePin(GPIOA, all_road_a, GPIO_PIN_RESET);
+
+//     switch (color) {
+//     case TRAFFIC_RED:    HAL_GPIO_WritePin(GPIOA, LED_RED_A_Pin, GPIO_PIN_SET); break;
+//     case TRAFFIC_YELLOW: HAL_GPIO_WritePin(GPIOA, LED_YEL_A_Pin, GPIO_PIN_SET); break;
+//     case TRAFFIC_GREEN:  HAL_GPIO_WritePin(GPIOA, LED_GRE_A_Pin, GPIO_PIN_SET); break;
+//     case TRAFFIC_OFF:
+//     default: break;
+//     }
+// }
+
+// static void set_road_b_color(TrafficColor color)
+// {
+//     const uint16_t all_road_b = LED_RED_B_Pin | LED_YEL_B_Pin | LED_GRE_B_Pin;
+//     HAL_GPIO_WritePin(GPIOA, all_road_b, GPIO_PIN_RESET);
+
+//     switch (color) {
+//     case TRAFFIC_RED:    HAL_GPIO_WritePin(GPIOA, LED_RED_B_Pin, GPIO_PIN_SET); break;
+//     case TRAFFIC_YELLOW: HAL_GPIO_WritePin(GPIOA, LED_YEL_B_Pin, GPIO_PIN_SET); break;
+//     case TRAFFIC_GREEN:  HAL_GPIO_WritePin(GPIOA, LED_GRE_B_Pin, GPIO_PIN_SET); break;
+//     case TRAFFIC_OFF:
+//     default: break;
+//     }
+// }
+
 static void set_road_a_color(TrafficColor color)
 {
+    static TrafficColor prev_color = (TrafficColor)0xFFU;
+    uint16_t active_pin = 0U;
     const uint16_t all_road_a = LED_RED_A_Pin | LED_YEL_A_Pin | LED_GRE_A_Pin;
-    HAL_GPIO_WritePin(GPIOA, all_road_a, GPIO_PIN_RESET);
+
+    if (color == prev_color) {
+        return;
+    }
+    prev_color = color;
 
     switch (color) {
-    case TRAFFIC_RED:    HAL_GPIO_WritePin(GPIOA, LED_RED_A_Pin, GPIO_PIN_SET); break;
-    case TRAFFIC_YELLOW: HAL_GPIO_WritePin(GPIOA, LED_YEL_A_Pin, GPIO_PIN_SET); break;
-    case TRAFFIC_GREEN:  HAL_GPIO_WritePin(GPIOA, LED_GRE_A_Pin, GPIO_PIN_SET); break;
+    case TRAFFIC_RED:    active_pin = LED_RED_A_Pin; break;
+    case TRAFFIC_YELLOW: active_pin = LED_YEL_A_Pin; break;
+    case TRAFFIC_GREEN:  active_pin = LED_GRE_A_Pin; break;
     case TRAFFIC_OFF:
-    default: break;
+    default:             active_pin = 0U; break;
+    }
+
+    HAL_GPIO_WritePin(GPIOA, (uint16_t)(all_road_a & ~active_pin), GPIO_PIN_RESET);
+    if (active_pin != 0U) {
+        HAL_GPIO_WritePin(GPIOA, active_pin, GPIO_PIN_SET);
     }
 }
 
 static void set_road_b_color(TrafficColor color)
 {
+    static TrafficColor prev_color = (TrafficColor)0xFFU;
+    uint16_t active_pin = 0U;
     const uint16_t all_road_b = LED_RED_B_Pin | LED_YEL_B_Pin | LED_GRE_B_Pin;
-    HAL_GPIO_WritePin(GPIOA, all_road_b, GPIO_PIN_RESET);
+
+    if (color == prev_color) {
+        return;
+    }
+    prev_color = color;
 
     switch (color) {
-    case TRAFFIC_RED:    HAL_GPIO_WritePin(GPIOA, LED_RED_B_Pin, GPIO_PIN_SET); break;
-    case TRAFFIC_YELLOW: HAL_GPIO_WritePin(GPIOA, LED_YEL_B_Pin, GPIO_PIN_SET); break;
-    case TRAFFIC_GREEN:  HAL_GPIO_WritePin(GPIOA, LED_GRE_B_Pin, GPIO_PIN_SET); break;
+    case TRAFFIC_RED:    active_pin = LED_RED_B_Pin; break;
+    case TRAFFIC_YELLOW: active_pin = LED_YEL_B_Pin; break;
+    case TRAFFIC_GREEN:  active_pin = LED_GRE_B_Pin; break;
     case TRAFFIC_OFF:
-    default: break;
+    default:             active_pin = 0U; break;
+    }
+
+    HAL_GPIO_WritePin(GPIOA, (uint16_t)(all_road_b & ~active_pin), GPIO_PIN_RESET);
+    if (active_pin != 0U) {
+        HAL_GPIO_WritePin(GPIOA, active_pin, GPIO_PIN_SET);
     }
 }
 
@@ -156,7 +206,7 @@ void LED_Display_Init(void)
 
     current_pair = 0U;
 
-    SoftwareTimer_Start(
+    software_timer_set(
         SOFT_TIMER_DISPLAY_SCAN,
         SEVENSEG_SCAN_INTERVAL_MS
     );
@@ -233,11 +283,11 @@ void LED_Display_Task(void)
     uint8_t road_b_value;
 
     /* Wait until the scan timer expires. */
-    if (SoftwareTimer_IsExpired(SOFT_TIMER_DISPLAY_SCAN) == 0U) {
+    if (software_timer_is_expired(SOFT_TIMER_DISPLAY_SCAN) == 0U) {
         return;
     }
 
-    SoftwareTimer_Start(
+    software_timer_set(
         SOFT_TIMER_DISPLAY_SCAN,
         SEVENSEG_SCAN_INTERVAL_MS
     );
@@ -287,4 +337,68 @@ void LED_Display_Task(void)
 
         current_pair = 0U;
     }
+}
+
+
+uint8_t milliseconds_to_display_seconds(uint32_t milliseconds)
+{
+    uint32_t seconds = milliseconds / 1000U;
+
+    if ((milliseconds % 1000U) != 0U) {
+        seconds++;
+    }
+    return (uint8_t)((seconds > 99U) ? 99U : seconds);
+}
+
+void task_AUTO_RED_GREEN(void)
+{
+    LED_Display_SetTraffic(TRAFFIC_RED, TRAFFIC_GREEN);
+}
+
+void task_AUTO_RED_YELLOW(void)
+{
+    LED_Display_SetTraffic(TRAFFIC_RED, TRAFFIC_YELLOW);
+}
+
+void task_AUTO_GREEN_RED(void)
+{
+    LED_Display_SetTraffic(TRAFFIC_GREEN, TRAFFIC_RED);
+}
+
+void task_AUTO_YELLOW_RED(void)
+{
+    LED_Display_SetTraffic(TRAFFIC_YELLOW, TRAFFIC_RED);
+}
+
+static uint8_t manual_blink_on = 1U;
+
+void LED_Display_BlinkStart(TrafficColor color)
+{
+    manual_blink_on = 1U;
+    LED_Display_BlinkBothRoads(color, manual_blink_on);
+    software_timer_set(SOFT_TIMER_MANUAL_BLINK, MANUAL_BLINK_TOGGLE_MS);
+}
+
+static void blink_manual_color(TrafficColor color)
+{
+    if (software_timer_is_expired(SOFT_TIMER_MANUAL_BLINK)) {
+        software_timer_set(SOFT_TIMER_MANUAL_BLINK, MANUAL_BLINK_TOGGLE_MS);
+        manual_blink_on = !manual_blink_on;
+        LED_Display_BlinkBothRoads(color, manual_blink_on);
+    }
+}
+
+void task_MAN_RED(void)
+{
+    blink_manual_color(TRAFFIC_RED);
+}
+
+void task_MAN_YELLOW(void)
+{
+    blink_manual_color(TRAFFIC_YELLOW);
+}
+
+void task_MAN_GREEN(void)
+{
+    blink_manual_color(TRAFFIC_GREEN);
 }
