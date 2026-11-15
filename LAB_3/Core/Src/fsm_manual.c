@@ -7,13 +7,6 @@
 #include "button.h"
 #include "config.h"
 
-void fsm_manual_enter_red(void)
-{
-    status_fsm = MAN_RED;
-    fsm_setting_load(getTimeOfSettingColor(SETTING_RED));
-    LED_Display_BlinkStart(TRAFFIC_RED);
-}
-
 void fsm_manual_run(void)
 {
     switch (status_fsm) {

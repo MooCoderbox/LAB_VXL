@@ -31,7 +31,6 @@ void FSM_Manual_Update(uint8_t button1_event,
 /* Returns 2, 3, or 4 according to the current shared status. */
 uint8_t FSM_Manual_GetMode(void);
 
-void fsm_manual_enter_red(void);
 void fsm_manual_run(void);
 
 #endif /* INC_FSM_MANUAL_H_ */
